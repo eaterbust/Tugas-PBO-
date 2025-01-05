@@ -2,151 +2,176 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-abstract class Game {
-    String nama;
-    int stock;
-    int price;
+class Produk {
+    private String idProduk;
+    private String nama;
+    private int harga;
+    private int stok;
 
-    public Game(String nama, int stock, int price) {
+    public Produk(String idProduk, String nama, int harga, int stok) {
+        this.idProduk = idProduk;
         this.nama = nama;
-        this.stock = stock;
-        this.price = price;
+        this.harga = harga;
+        this.stok = stok;
     }
 
-    abstract void purchase();
-
-    void info() {
-        System.out.println("Game: " + nama + " | Stock: " + stock + " | Price: " + price);
-    }
-}
-
-class digitalGame extends Game {
-    public digitalGame(String nama, int stock, int price) {
-        super(nama, stock, price);
+    public String getIdProduk() {
+        return idProduk;
     }
 
-    @Override
-    void purchase() {
-        if (stock > 0) {
-            stock--;
-            System.out.println("Pembelian Digital Game: " + nama + " IDR " + price);
+    public String getNama() {
+        return nama;
+    }
+
+    public int getHarga() {
+        return harga;
+    }
+
+    public int getStok() {
+        return stok;
+    }
+
+    public void tambahStok(int jumlah) {
+        this.stok += jumlah;
+    }
+
+    public boolean kurangiStok(int jumlah) {
+        if (stok >= jumlah) {
+            this.stok -= jumlah;
+            return true;
         } else {
-            System.out.println("Stock untuk " + nama + " tidak tersedia");
+            return false;
         }
     }
+
+    public void tampilkanDetail() {
+        System.out.printf("%-5s %-40s %-10d %-10d\n", idProduk, nama, harga, stok);
+    }
 }
 
-class gameFisik extends Game {
-    public gameFisik(String nama, int stock, int price) {
-        super(nama, stock, price);
+class Transaksi {
+    private String idTransaksi;
+    private Produk produk;
+    private int jumlah;
+
+    public Transaksi(String idTransaksi, Produk produk, int jumlah) {
+        this.idTransaksi = idTransaksi;
+        this.produk = produk;
+        this.jumlah = jumlah;
     }
 
-    @Override
-    void purchase() {
-        if (stock > 0) {
-            stock--;
-            System.out.println("Pembelian Game Fisik: " + nama);
-        } else {
-            System.out.println("Stock untuk " + nama + " tidak tersedia");
+    public String getIdTransaksi() {
+        return idTransaksi;
+    }
+
+    public Produk getProduk() {
+        return produk;
+    }
+
+    public int getJumlah() {
+        return jumlah;
+    }
+
+    public void tampilkanDetail() {
+        int totalHarga = jumlah * produk.getHarga();
+        System.out.printf("%-10s %-40s %-10d %-10d\n", idTransaksi, produk.getNama(), jumlah, totalHarga);
+    }
+}
+
+class Toko {
+    private List<Produk> daftarProduk;
+    private List<Transaksi> daftarTransaksi;
+    private int idTransaksiCounter = 1001;
+
+    public Toko() {
+        daftarProduk = new ArrayList<>();
+        daftarTransaksi = new ArrayList<>();
+    }
+
+    public void tambahProduk(Produk produk) {
+        daftarProduk.add(produk);
+    }
+
+    public void tampilkanProduk() {
+        System.out.printf("%-5s %-40s %-10s %-10s\n", "ID", "Nama Produk", "Harga", "Stok");
+        System.out.println("=============================================================");
+        for (Produk produk : daftarProduk) {
+            produk.tampilkanDetail();
         }
     }
-}
 
-interface Bonus {
-    void addBonus(String bonus);
-}
-
-class digitalBonus extends digitalGame implements Bonus {
-    private String bonusItem;
-
-    public digitalBonus(String nama, int stock, int price) {
-        super(nama, stock, price);
-    }
-
-    @Override
-    public void addBonus(String bonus) {
-        this.bonusItem = bonus;
-        System.out.println("Bonus yang didapat: " + bonusItem);
-    }
-
-    @Override
-    void purchase() {
-        if (stock > 0) {
-            stock--;
-            System.out.println("Pembelian Game Digital: " + nama + " | Bonus: " + bonusItem);
-        } else {
-            System.out.println("Stock untuk " + nama + " tidak tersedia");
+    public void tampilkanTransaksi() {
+        System.out.printf("%-10s %-40s %-10s %-10s\n", "ID Transaksi", "Nama Produk", "Jumlah", "Total Harga");
+        System.out.println("=============================================================");
+        for (Transaksi transaksi : daftarTransaksi) {
+            transaksi.tampilkanDetail();
         }
+    }
+
+    public void lakukanTransaksi(String idProduk, int jumlah) {
+        for (Produk produk : daftarProduk) {
+            if (produk.getIdProduk().equals(idProduk)) {
+                if (produk.kurangiStok(jumlah)) {
+                    String idTransaksi = "T" + idTransaksiCounter++;
+                    Transaksi transaksi = new Transaksi(idTransaksi, produk, jumlah);
+                    daftarTransaksi.add(transaksi);
+                    System.out.println("Transaksi berhasil!");
+                    transaksi.tampilkanDetail();
+                } else {
+                    System.out.println("Stok tidak mencukupi untuk produk ini.");
+                }
+                return;
+            }
+        }
+        System.out.println("Produk dengan ID " + idProduk + " tidak ditemukan.");
     }
 }
 
 public class GameStore {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
+        Toko toko = new Toko();
 
-        List<Game> games = new ArrayList<>();
-        games.add(new digitalBonus("Digital Love Live Idol School Project", 5, 250999));
-        games.add(new digitalBonus("Digital Gwent The Witcher", 10, 122999));
-        games.add(new digitalBonus("Digital Assassin's Creed Odyssey", 20, 785999));
-        games.add(new digitalBonus("Digital Hogwarts Legacy", 5, 785999));
-        games.add(new digitalBonus("Digital Blatriory Mobile of the year", 7, 146000));
-        games.add(new digitalBonus("Digital Ghost Of Tsushima", 4, 785999));
-        games.add(new digitalBonus("Coffee Talk Tokyo", 10, 299999));
-        games.add(new digitalBonus("Troublemaker 2: Beyond Dream", 10, 349999));
-        games.add(new digitalBonus("Pamali: The Vengeful Mother", 7, 199999));
-        games.add(new digitalBonus("Elmora", 10, 249999));
-        games.add(new digitalBonus("Mirth Island", 7, 229999));
-        games.add(new digitalBonus("Kidbash: Super Legend", 6, 279999));
-        games.add(new gameFisik("Tekken 8 Asuka Kazama Collection", 3, 785999));
-        games.add(new gameFisik("Monster Hunter World", 10, 785999));
-        games.add(new gameFisik("Collector Edition Assassin's Creed Mirage", 1, 785999));
-        games.add(new gameFisik("Grand Theft Auto 6", 100, 1099999));
-        games.add(new gameFisik("Death Stranding 2: The Beach", 5, 799999));
-        games.add(new gameFisik("Fable", 8, 699999));
-        games.add(new gameFisik("Metroid Prime 4: Beyond", 12, 849999));
-        games.add(new gameFisik("Borderlands 4", 14, 1099999));
-        games.add(new gameFisik("Ghost of Yōtei", 74, 899999));
-        games.add(new gameFisik("Marvel 1943: Rise of Hydra", 8, 1099999));
-        games.add(new gameFisik("Civilization 7", 12, 1499999));
-        games.add(new gameFisik("Assassin's Creed Shadows", 52, 1099999));
-        games.add(new gameFisik("Kingdom Come: Deliverance 2", 42, 999999));
+        // Menambahkan produk
+        toko.tambahProduk(new Produk("P001", "Digital Love Live Idol School Project", 250999, 5));
+        toko.tambahProduk(new Produk("P002", "Digital Gwent The Witcher", 122999, 10));
+        toko.tambahProduk(new Produk("P003", "Digital Assassin's Creed Odyssey", 785999, 20));
+        toko.tambahProduk(new Produk("P004", "Digital Hogwarts Legacy", 785999, 5));
+        toko.tambahProduk(new Produk("P005", "Digital Blatriory Mobile of the year", 146000, 7));
+        toko.tambahProduk(new Produk("P006", "Digital Ghost Of Tsushima", 785999, 4));
+        toko.tambahProduk(new Produk("P007", "Coffee Talk Tokyo", 299999, 10));
+        toko.tambahProduk(new Produk("P008", "Troublemaker 2: Beyond Dream", 349999, 10));
+        toko.tambahProduk(new Produk("P009", "Pamali: The Vengeful Mother", 199999, 7));
+        toko.tambahProduk(new Produk("P010", "Elmora", 249999, 10));
 
-        System.out.println("Stock yang tersedia:");
-        for (int i = 0; i < games.size(); i++) {
-            System.out.print((i + 1) + ". ");
-            games.get(i).info();
-        }
+        System.out.println("========================================================");
+        System.out.println("                SELAMAT BERBELANJA DI TOKO GAME S5C");
+        System.out.println("========================================================");
 
-        System.out.println("\nSilahkan pilih game yang ingin Anda beli:");
-        System.out.println("Setiap Pembelian Digital Game akan mendapatkan DLC Skin Pack");
-        int choice = scanner.nextInt();
+        boolean running = true;
+        while (running) {
+            System.out.println("\nGAME YANG TERSEDIA:");
+            toko.tampilkanProduk();
 
-        if (choice > 0 && choice <= games.size()) {
-            Game selectedGame = games.get(choice - 1);
+            System.out.println("\nMasukkan ID produk yang ingin dibeli (atau ketik 'exit' untuk keluar):");
+            String idProduk = scanner.nextLine();
 
-            System.out.println("Berapa banyak yang ingin Anda beli?");
-            int quantity = scanner.nextInt();
-
-            if (selectedGame.stock >= quantity) {
-                int totalPrice = selectedGame.price * quantity;
-                selectedGame.stock -= quantity; // Kurangi stock
-                System.out.println("Pembelian berhasil:");
-                System.out.println("Nama Game: " + selectedGame.nama);
-                System.out.println("Jumlah yang dibeli: " + quantity);
-                System.out.println("Total harga: IDR " + totalPrice);
-
-                if (selectedGame instanceof digitalBonus) {
-                    ((digitalBonus) selectedGame).addBonus("DLC Skin Pack");
-                }
-            } else {
-                System.out.println("Stock tidak mencukupi, silahkan hubungi admin untuk melakukan Pre - Order . Tersedia: " + selectedGame.stock);
+            if (idProduk.equalsIgnoreCase("exit")) {
+                running = false;
+                break;
             }
 
-            selectedGame.info();
-        } else {
-            System.out.println("-------.");
+            System.out.println("Masukkan jumlah yang ingin dibeli:");
+            int jumlah = scanner.nextInt();
+            scanner.nextLine(); // Consume newline
+
+            toko.lakukanTransaksi(idProduk, jumlah);
+
+            System.out.println("\nDaftar transaksi yang telah dilakukan:");
+            toko.tampilkanTransaksi();
         }
 
+        System.out.println("Terima kasih telah berbelanja di Toko Game S5C!");
         scanner.close();
     }
 }
